@@ -7,8 +7,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +29,13 @@ public class AlarmReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		this.context = context;
-		new MapTask().execute();
+		SingleShotLocationProvider.requestSingleUpdate(context,
+				new SingleShotLocationProvider.LocationCallback() {
+					@Override
+					public void onNewLocationAvailable(Location location) {
+						new MapTask().execute(location);
+					}
+				});
 	}
 
 	private void showNotification(PokeNotification pokeNotification) {
@@ -52,14 +61,14 @@ public class AlarmReceiver extends BroadcastReceiver {
 	private static String RED = "0xff0000";
 	private static String GREEN = "0x00ff00";
 
-	class MapTask extends AsyncTask<Void, Void, PokeNotification> {
+	class MapTask extends AsyncTask<Location, Void, PokeNotification> {
 		private Exception exception;
 
 		@Override
-		protected PokeNotification doInBackground(Void... params) {
+		protected PokeNotification doInBackground(Location... location) {
 			try {
-				Marker currLoc = getCurrLoc();
-				List<Marker> pokemon = findPokemon();
+				Marker currLoc = new Marker("Home", RED, location[0].getLatitude(), location[0].getLongitude());
+				List<Marker> pokemon = findPokemon(currLoc);
 				Bitmap map = getMap(mapUrl(currLoc, pokemon));
 				return new PokeNotification(map, "TITLE", "short text", "long text");
 			} catch (Exception e) {
@@ -68,17 +77,19 @@ public class AlarmReceiver extends BroadcastReceiver {
 			}
 		}
 
-		private Marker getCurrLoc() {
-			//TODO: load actual location
-			Marker currLoc = new Marker("Home", RED, 40.7427765, -74.0006327);
-			return currLoc;
+		protected void onPostExecute(PokeNotification pokeNotification) {
+			// TODO: check this.exception
+
+			if (pokeNotification != null) {
+				showNotification(pokeNotification);
+			}
 		}
 
-		private List<Marker> findPokemon() {
+		private List<Marker> findPokemon(Marker currLoc) {
 			//TODO: load actual pokemon
 			List<Marker> markers = new ArrayList<>();
-			markers.add(new Marker("Omanyte", GREEN, 40.7457765, -74.0006327));
-			markers.add(new Marker("Haunter", GREEN, 40.7427765, -74.0046327));
+			markers.add(new Marker("Omanyte", GREEN, currLoc.lat + 0.002, currLoc.lng));
+			markers.add(new Marker("Bulbasaur", GREEN, currLoc.lat, currLoc.lng + 0.002));
 			return markers;
 		}
 
@@ -98,12 +109,6 @@ public class AlarmReceiver extends BroadcastReceiver {
 		private Bitmap getMap(String mapUrl) throws IOException {
 			Bitmap bitmap = BitmapFactory.decodeStream((InputStream) new URL(mapUrl).getContent());
 			return bitmap;
-		}
-
-		protected void onPostExecute(PokeNotification pokeNotification) {
-			// TODO: check this.exception
-
-			showNotification(pokeNotification);
 		}
 	}
 }
