@@ -8,15 +8,12 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -58,19 +55,22 @@ public class AlarmReceiver extends BroadcastReceiver {
 		notificationmanager.notify(0, builder.build());
 	}
 
-	private static String RED = "0xff0000";
-	private static String GREEN = "0x00ff00";
-
 	class MapTask extends AsyncTask<Location, Void, PokeNotification> {
 		private Exception exception;
 
 		@Override
 		protected PokeNotification doInBackground(Location... location) {
 			try {
-				Marker currLoc = new Marker("Home", RED, location[0].getLatitude(), location[0].getLongitude());
-				List<Marker> pokemon = findPokemon(currLoc);
-				Bitmap map = getMap(mapUrl(currLoc, pokemon));
-				return new PokeNotification(map, "TITLE", "short text", "long text");
+				Marker currLoc = new Marker("Home", Marker.BLUE, location[0].getLatitude(), location[0].getLongitude()
+						, System
+						.currentTimeMillis() / 1000, -1);
+				List<Marker> pokemon = new FindPokemon().find(currLoc);
+				if (pokemon == null || pokemon.size() == 0) {
+					return null;
+				} else {
+					Bitmap map = getMap(mapUrl(currLoc, pokemon));
+					return new PokeNotification(map, "TITLE", "short text", "long text");
+				}
 			} catch (Exception e) {
 				this.exception = e;
 				return null;
@@ -85,16 +85,8 @@ public class AlarmReceiver extends BroadcastReceiver {
 			}
 		}
 
-		private List<Marker> findPokemon(Marker currLoc) {
-			//TODO: load actual pokemon
-			List<Marker> markers = new ArrayList<>();
-			markers.add(new Marker("Omanyte", GREEN, currLoc.lat + 0.002, currLoc.lng));
-			markers.add(new Marker("Bulbasaur", GREEN, currLoc.lat, currLoc.lng + 0.002));
-			return markers;
-		}
-
 		private String mapUrl(Marker currLoc, List<Marker> pokemons) {
-			String output = "http://maps.googleapis.com/maps/api/staticmap?zoom=15&scale=1&size=600x300&";
+			String output = "http://maps.googleapis.com/maps/api/staticmap?zoom=14&scale=1&size=600x300&";
 			output += "maptype=roadmap&format=png&visual_refresh=true";
 
 			output += "&center=" + String.valueOf(currLoc.lat) + "," + String.valueOf(currLoc.lng);

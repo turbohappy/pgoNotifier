@@ -1,9 +1,11 @@
 package pgo.gottacatchemall;
 
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -13,10 +15,12 @@ import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
-import android.support.v7.app.ActionBar;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.RingtonePreference;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
 import android.text.TextUtils;
 import android.view.MenuItem;
 
@@ -38,7 +42,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 	 * A preference value change listener that updates the preference's summary
 	 * to reflect its new value.
 	 */
-	private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
+	private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference
+			.OnPreferenceChangeListener() {
 
 		@Override
 		public boolean onPreferenceChange(Preference preference, Object value) {
@@ -121,6 +126,18 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setupActionBar();
+
+		String[] permissions = {Manifest.permission.WAKE_LOCK, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest
+				.permission.ACCESS_FINE_LOCATION, Manifest.permission.INTERNET};
+		for (String permission : permissions) {
+			checkAndRequestPermission(permission);
+		}
+	}
+
+	private void checkAndRequestPermission(String permission) {
+		if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+			ActivityCompat.requestPermissions(this, new String[]{permission}, 0);
+		}
 	}
 
 	/**
