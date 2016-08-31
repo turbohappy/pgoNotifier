@@ -23,11 +23,13 @@ public class FindPokemon {
 		JSONArray pokemons = data.getJSONArray("pokemons");
 		for (int i = 0; i < pokemons.length(); i++) {
 			JSONObject pokemon = pokemons.getJSONObject(i);
-			Marker pokemonMarker = new Marker(pokemon.getString("pokemon_name"), "", pokemon.getDouble
+			Marker pokemonMarker = new Marker(pokemon.getString("pokemon_name"), pokemon.getDouble
 					("latitude"), pokemon.getDouble("longitude"), pokemon.getLong("expires"), pokemon.getInt
 					("pokemon_id"));
 			if (PokeFilter.desiredPokemon(pokemonMarker.id)) {
-				double speed = neededSpeedInKph(currLoc, pokemonMarker);
+				pokemonMarker.distance = calculateDistanceInKm(currLoc, pokemonMarker);
+				pokemonMarker.timeDiffMins = (pokemonMarker.time - currLoc.time) / 60.0;
+				double speed = neededSpeedInKph(pokemonMarker.distance, pokemonMarker.timeDiffMins);
 				if (speed < KM_PER_HOUR_MAX) {
 					pokemonMarker.color = calculateMarkerColor(speed);
 					output.add(pokemonMarker);
@@ -38,12 +40,12 @@ public class FindPokemon {
 	}
 
 	private String calculateMarkerColor(double speed) {
-		if (speed > (KM_PER_HOUR_MAX / 2)) {
-			return Marker.RED;
-		} else if (speed > (KM_PER_HOUR_MAX / 4)) {
+		if (speed < (KM_PER_HOUR_MAX / 4.0)) {
+			return Marker.GREEN;
+		} else if (speed < (KM_PER_HOUR_MAX / 2.0)) {
 			return Marker.YELLOW;
 		} else {
-			return Marker.GREEN;
+			return Marker.RED;
 		}
 	}
 
@@ -75,16 +77,10 @@ public class FindPokemon {
 
 	private static final double R = 6372.795477598; //km
 
-	private double neededSpeedInKph(Marker from, Marker to) {
-		double dist = calculateDistanceInKm(from, to);
-		double timeDiffInHrs = timeDifferenceInSecs(from, to) / (60 * 60);
+	private double neededSpeedInKph(double dist, double timeDiffMins) {
+		double timeDiffInHrs = timeDiffMins / 60;
 		double speedInKph = dist / timeDiffInHrs;
 		return speedInKph;
-	}
-
-	private double timeDifferenceInSecs(Marker from, Marker to) {
-		long timeDiff = to.time - from.time;
-		return timeDiff;
 	}
 
 	private double calculateDistanceInKm(Marker from, Marker to) {

@@ -46,7 +46,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 				.setStyle(new NotificationCompat.BigPictureStyle()
 						.bigPicture(pokeNotification.bitmap)
 						.setSummaryText(pokeNotification.longText))
-				.setAutoCancel(true);
+				.setAutoCancel(false);
 
 		// Create Notification Manager
 		NotificationManager notificationmanager = (NotificationManager) this.context
@@ -61,15 +61,15 @@ public class AlarmReceiver extends BroadcastReceiver {
 		@Override
 		protected PokeNotification doInBackground(Location... location) {
 			try {
-				Marker currLoc = new Marker("Home", Marker.BLUE, location[0].getLatitude(), location[0].getLongitude()
-						, System
-						.currentTimeMillis() / 1000, -1);
+				Marker currLoc = new Marker("Home", location[0].getLatitude(), location[0].getLongitude()
+						, System.currentTimeMillis() / 1000, -1);
+				currLoc.color = Marker.BLUE;
 				List<Marker> pokemon = new FindPokemon().find(currLoc);
 				if (pokemon == null || pokemon.size() == 0) {
 					return null;
 				} else {
 					Bitmap map = getMap(mapUrl(currLoc, pokemon));
-					return new PokeNotification(map, "TITLE", "short text", "long text");
+					return new PokeNotification(map, pokemon);
 				}
 			} catch (Exception e) {
 				this.exception = e;
@@ -86,7 +86,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 		}
 
 		private String mapUrl(Marker currLoc, List<Marker> pokemons) {
-			String output = "http://maps.googleapis.com/maps/api/staticmap?zoom=14&scale=1&size=600x300&";
+			String output = "http://maps.googleapis.com/maps/api/staticmap?size=1200x600&";
 			output += "maptype=roadmap&format=png&visual_refresh=true";
 
 			output += "&center=" + String.valueOf(currLoc.lat) + "," + String.valueOf(currLoc.lng);
