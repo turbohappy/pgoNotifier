@@ -9,13 +9,16 @@ import android.location.Location;
  * Created by bdavis on 8/19/16.
  */
 public class AlarmReceiver extends BroadcastReceiver {
+	private static PokeNotification previousNotification;
+
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		final Notifier notifier = new Notifier(context);
 		final FindPokemonTask findPokemonTask = new FindPokemonTask(new FindPokemonTask.FindPokemonTaskFinished() {
 			@Override
 			public void finished(PokeNotification pokeNotification) {
-				notifier.createOrUpdateNotification(pokeNotification);
+				notifier.createOrUpdateNotification(pokeNotification, previousNotification);
+				previousNotification = pokeNotification;
 			}
 		});
 		SingleShotLocationProvider.requestSingleUpdate(context,

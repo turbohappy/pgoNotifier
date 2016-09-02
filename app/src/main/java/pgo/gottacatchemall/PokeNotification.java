@@ -12,18 +12,18 @@ import java.util.List;
 public class PokeNotification {
 	public Bitmap bitmap;
 	public String title;
-	public String shortText;
 	public String longText;
+	public List<Marker> pokemon;
 
 	public PokeNotification(Bitmap bitmap, List<Marker> pokemon) {
 		this.bitmap = bitmap;
-		this.setTitleAndText(pokemon);
+		this.pokemon = pokemon;
+		this.setTitleAndText(this.pokemon);
 	}
 
 	private void setTitleAndText(List<Marker> pokemon) {
 		this.title = String.valueOf(pokemon.size()) + " pokemon in your area";
 		this.longText = textualize(pokemon);
-		this.shortText = "S" + this.longText;
 	}
 
 	private String textualize(List<Marker> pokemon) {
